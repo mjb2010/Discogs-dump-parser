@@ -11,7 +11,7 @@
 # for Python 2 compatibility
 from __future__ import print_function
 
-import gzip, re
+import gzip
 from io import BytesIO
 from sys import stdout
 from time import time
