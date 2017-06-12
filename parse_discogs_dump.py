@@ -98,7 +98,7 @@ def read_via_etree(stream):
 	a dot for every nth release, as determined by global var 'interval'.
 	"""
 	element_stack = []
-	release_element_stack = []
+	interesting_element_depth = 0
 	release_counter = 0
 	release_id = None
 	try:
@@ -107,18 +107,18 @@ def read_via_etree(stream):
 			if event == 'start':
 				element_stack.append(elem)
 				if elem.tag == 'release':
-					release_element_stack.append(elem)
+					interesting_element_depth += 1
 			elif event == 'end':
 				element_stack.pop()
 				if elem.tag == 'release':
-					release_element_stack.pop()
+					interesting_element_depth -= 1
 					# after each release element is parsed, consider printing a dot
 					release_id = elem.attrib['id']
 					release_counter += 1
 					if release_counter % interval == 0:
 						print('.', end='')
 						stdout.flush()
-				if element_stack and not release_element_stack:
+				if element_stack and not interesting_element_depth:
 					element_stack[-1].remove(elem)
 		del context
 	except:
