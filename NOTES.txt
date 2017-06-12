@@ -1,0 +1,68 @@
+The older dump files were formatted inconveniently. Some were ISO-8859-1
+encoded, rather than UTF-8, but they did not have an encoding declaration
+at the top of the file. Sometimes they would contain characters invalid
+in XML (e.g. control characters).
+
+Worse, each file had multiple elements at the root level, rather than
+having a single element wrapped around everything. This means the file was
+what the XML spec calls a parsed general entity: an XML fragment which
+could only be referenced from another document; it couldn't be parsed as a
+well-formed XML document, itself, unless we somehow wrapped it in an
+enclosing 'document element', also sometimes called a 'root element'.
+
+As of 2017, it seems these issues have all been resolved. Nevertheless,
+I originally wrote the script to handle the old rootless format, so I am
+leaving that code in to demonstrate the technique for wrapping a stream
+in a 'dummy' element.
+
+There are different options for doing the wrapping:
+
+A. Create a new file with '<dummy>' + the decompressed dump file + '</dummy>'.
+The output could be gzipped. This is feasible but isn't very elegant. We'd
+also probably want to make sure it hasn't already been done, which could get
+tricky.
+
+B. Decompress the dump file and reference it as an external entity from
+within a separate XML document that looks like the following:
+
+<?xml version="1.0">
+<!DOCTYPE dummy [<!ENTITY data SYSTEM "discogs_foo_releases.xml">]>
+<dummy>&data;</dummy>
+
+This is risky because the decompressed data exceeds 2 GB (a common upper limit
+when reading files), and because a non-validating XML parser isn't required to
+read external entities at all.
+
+C. Wrap the decompressed stream in an object which adds '<dummy>' & '</dummy>'
+to the stream. This is probably the ideal solution, and is what I implemented,
+with help from Jeremy Kloth.
+
+Another issue is cElementTree builds a tree fragment for each element start
+tag it encounters. Even if you call the element's clear() method to release
+memory, you're removing its attributes and content, but not the element
+itself; an empty element remains attached to its parent.
+
+As explained at <http://effbot.org/elementtree/iterparse.htm>, you can call
+clear() on the root element (which takes some extra effort to obtain), but
+this only clears the fully-read children; it doesn't help if the elements you
+need to clear are not fully read yet, as happens when we use the dummy wrapper.
+Sample code for lxml's ElementTree to deal with this problem can be found at
+<https://www.ibm.com/developerworks/xml/library/x-hiperfparse/>, but it relies
+on lxml's extensions to the API; you can't use it with regular ElementTree.
+
+A solution was mentioned at <https://stackoverflow.com/a/36143117/1362109>, but
+did not include code, so I figured it out myself.
+
+You don't use clear() at all, but rather just keep a stack of elements seen,
+based on start tags. When pushing an element of particular interest onto the
+stack, also push it onto a separate stack. As each end tag is encountered, pop
+the current element off both stacks. Now the last element in the main stack
+should be the parent of the current element. If the secondary stack is empty,
+you know you're not in an element of interest, so it is safe to call
+parent.remove(elem) to clear and discard the current element.
+
+This technique thus allows a tree to be built for each element of interest,
+such as a 'release' element. Immediately before discarding it, you can use the
+usual ElementTree API on it, such as elem.findall('.//track/title').
+
+- Mike J. Brown <mike -at- skew.org>
