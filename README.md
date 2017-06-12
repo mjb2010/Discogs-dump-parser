@@ -7,4 +7,6 @@ Discogs artist, label, release and master release data is publicly available in 
 
 This little Python script parses the Discogs data using the ultrafast cElementTree parser which comes with Python 2.5 and up. The parsed data is mostly ignored; the idea is just to successfully read the XML as fast as possible and print out a dot for every 1000 'release' elements read. At the end it tells you how much time it took. If you interrupt it, it tells you the last release ID it saw.
 
-To try it out, get one of the release data dump files (they are huge!), edit the script to define dump_filepath accordingly, and run the script. The dump file can be left gzipped or it can be unzipped; the script handles it either way.
+As of mid-2017, on my 3.1 GHz i5-2400 quad core system, it takes about 58 minutes to plow through the 4.6 GB gzipped release data XML, yet it only uses about 16 MB of memory.
+
+To try it out, get one of the release data dump files (they are huge!), edit the script to define dump_filepath accordingly, and run the script. It automatically handles uncompressed files and the old style of dump which had no root element.
