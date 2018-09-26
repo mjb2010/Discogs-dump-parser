@@ -2,7 +2,7 @@
   parse_discogs_dump.py
   A lightweight parser of Discogs data dumps
   
-  Version: 2017-06-12
+  Version: 2018-09-26
   Original author: Mike J. Brown <mike@skew.org>
   License: CC0 <creativecommons.org/publicdomain/zero/1.0/>
   Requires: Python 2.5 or higher
@@ -13,13 +13,13 @@ from __future__ import print_function
 
 import gzip
 from io import BytesIO
-from sys import stdout
+from sys import stdout, stderr
 from time import time
 from xml.etree import cElementTree as ET
 
 
 # dump_filepath is the path to the dump file. It must end with '.xml' or '.xml.gz'.
-dump_filepath = '''I:\Downloads\discogs_20170601_releases.xml.gz'''
+dump_filepath = '''discogs_20180901_releases.xml.gz'''
 
 # interval affects how the progress of reading the file is marked.
 # A dot will be displayed after that many releases have been read.
@@ -78,28 +78,16 @@ def get_dump_file_stream(filepath):
 		raise 'Unknown extension on dump file path ' + dump_filepath
 
 
-#for debugging, currently unused
-def serialize(elem):
+def read_via_etree(stream, element_processor):
 	"""
-	Write out an XML fragment for the given element.
-	"""
-	tree = ET.ElementTree(elem)
-	tree.write(stdout, encoding='windows-1252')
-	stdout.flush()
-	del tree
-
-
-def read_via_etree(stream):
-	"""
-	Parse dump XML incrementally, fully removing elements when they are
-	completely read, unless they are descendants of a 'release' element.
+	Parse a release dump XML stream incrementally, fully removing elements when
+	they are completely read, unless they are descendants of a 'release' element.
 	
-	'release' elements are handled specially, in this demo just printing
-	a dot for every nth release, as determined by global var 'interval'.
+	Completed 'release' elements are handled by the process() method of an
+	ElementProcessor subclass instance given as the 2nd argument.
 	"""
 	element_stack = []
 	interesting_element_depth = 0
-	release_counter = 0
 	release_id = None
 	try:
 		context = ET.iterparse(stream, events=('start', 'end'))
@@ -112,26 +100,67 @@ def read_via_etree(stream):
 				element_stack.pop()
 				if elem.tag == 'release':
 					interesting_element_depth -= 1
-					# after each release element is parsed, consider printing a dot
 					release_id = elem.attrib['id']
-					release_counter += 1
-					if release_counter % interval == 0:
-						print('.', end='')
-						stdout.flush()
+					element_processor.process(elem)
 				if element_stack and not interesting_element_depth:
 					element_stack[-1].remove(elem)
 		del context
 	except:
-		print('\nInterrupted. Last release parsed:', release_id)
+		print('\nInterrupted. Last release parsed:', release_id, file=stderr)
 		raise
 
 
+class ElementProcessor:
+	"""
+	An object which processes elements. Examples of subclasses follow.
+	"""
+	def __init__(self):
+		self.counter = 0
+
+	def process(self, elem):
+		"""
+		Do something with a parsed element.
+		This example just increments a counter of elements processed.
+		Subclasses should provide their own version of this method to do more.
+		"""
+		self.counter += 1
+
+
+class ReleaseElementProcessor(ElementProcessor):
+	"""
+	An example of an object which processes release elements.
+	Prints a dot for every nth release, where n is global var 'interval'.
+	"""
+	def process(self, elem):
+		self.counter += 1
+		if self.counter % interval == 0:
+			print('.', end='', file=stderr)
+			stderr.flush()
+
+
+class ReleaseElementSerializer(ElementProcessor):
+	"""
+	Another example of an object which processes elements.
+	For every nth release, it writes an XML fragment to stdout.
+	"""
+	def process(self, elem):
+		self.counter += 1
+		if self.counter % interval == 0:
+			tree = ET.ElementTree(elem)
+			tree.write(stdout, encoding='windows-1252')
+			stdout.flush()
+			del tree
+
+
 # when run from the command line, do this stuff
-print('reading file via cElementTree:', end='')
-stdout.flush()
+print('reading file via cElementTree:', end='', file=stderr)
+stderr.flush()
 dump_file_stream = GeneralEntityStreamWrapper(get_dump_file_stream(dump_filepath))
+processor = ReleaseElementProcessor()
+# uncomment the following if you want an XML fragment instead of a dot
+#processor = ReleaseElementSerializer()
 starttime = time()
-read_via_etree(dump_file_stream)
+read_via_etree(dump_file_stream, processor)
 endtime = time()
 dump_file_stream.close()
-print(' (total time: ', endtime - starttime, 's)', sep='')
+print(' (total time: ', endtime - starttime, 's)', sep='', file=stderr)
