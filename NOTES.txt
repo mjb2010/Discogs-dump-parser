@@ -37,10 +37,10 @@ C. Wrap the decompressed stream in an object which adds '<dummy>' & '</dummy>'
 to the stream. This is probably the ideal solution, and is what I implemented,
 with help from Jeremy Kloth.
 
-Another issue is cElementTree builds a tree fragment for each element start
-tag it encounters. Even if you call the element's clear() method to release
-memory, you're removing its attributes and content, but not the element
-itself; an empty element remains attached to its parent.
+Another issue is cElementTree builds a tree the whole time it is parsing. You
+can call the clear() method on elements to release memory, but this is only
+removing the element's attributes and fully parsed content. It doesn't remove
+the element itself; an empty element remains attached to its parent.
 
 As explained at <http://effbot.org/elementtree/iterparse.htm>, you can call
 clear() on the root element (which takes some extra effort to obtain), but
@@ -50,15 +50,13 @@ Sample code for lxml's ElementTree to deal with this problem can be found at
 <https://www.ibm.com/developerworks/xml/library/x-hiperfparse/>, but it relies
 on lxml's extensions to the API; you can't use it with regular ElementTree.
 
-A solution was mentioned at <https://stackoverflow.com/a/36143117/1362109>, but
-did not include code, so I figured it out myself.
-
-You don't use clear() at all, but rather just keep a stack of elements seen,
-based on start tags. When pushing an element of particular interest onto the
-stack, also push it onto a separate stack. As each end tag is encountered, pop
-the current element off both stacks. Now the last element in the main stack
-should be the parent of the current element. If the secondary stack is empty,
-you know you're not in an element of interest, so it is safe to call
+As I posted at <https://stackoverflow.com/a/44509632/1362109>, you don't use
+clear() at all, but rather just keep a stack of elements seen, based on start
+tags. When pushing an element of particular interest onto the stack, increment
+a counter. At each end tag, pop the current element off the stack, and if the
+end tag is for the element of interest, decrement the counter. Now the last
+element in the stack is the parent of the current element. If the counter is
+zero, you know you're not in an element of interest, so it is safe to call
 parent.remove(elem) to clear and discard the current element.
 
 This technique thus allows a tree to be built for each element of interest,
