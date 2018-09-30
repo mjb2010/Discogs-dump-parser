@@ -13,13 +13,14 @@ from __future__ import print_function
 
 import gzip
 from io import BytesIO
-from sys import stdout, stderr, argv, exc_info
+from sys import stdout, stderr, exc_info
 
 try:
 	from xml.etree import cElementTree as ET
 except ImportError:
 	from xml.etree import ElementTree as ET
-	print('cElementTree is not available; using regular ElementTree instead. Expect slowness.', file=stderr)
+	print('cElementTree unavailable; using regular ElementTree instead. Expect slowness.', file=stderr)
+
 
 class GeneralEntityStreamWrapper(object):
 	"""
@@ -138,8 +139,8 @@ class ReleaseElementCounter(ElementProcessor):
 	"""
 	def __init__(self, n=1000):
 		self.counter = 0
-		self.item_id = None
 		self.interval = n
+		self.item_id = None
 		self.interesting_element_name = 'release'
 
 	def process(self, elem):
@@ -199,7 +200,7 @@ if __name__ == "__main__":
 	processor = ReleaseElementCounter()
 	# uncomment the following if you want an XML fragment instead of a dot
 	#processor = ReleaseElementSerializer()
-	print('reading file via cElementTree:', end='', file=stderr)
+	print('reading file:', file=stderr)
 	stderr.flush()
 	starttime = time()
 	process_dump_file(argv[1], processor)
