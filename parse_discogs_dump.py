@@ -151,10 +151,6 @@ class ReleaseElementCounter(ElementProcessor):
 			stderr.flush()
 
 	def handle_interruption(self, e):
-		"""
-		If parsing is interrupted, this method will be called to handle it.
-		This example prints the element count.
-		"""
 		print('\nInterrupted after %d %ss. Last %s id parsed: %s' % (self.counter, self.interesting_element_name, self.interesting_element_name, self.item_id), file=stderr)
 		raise
 
