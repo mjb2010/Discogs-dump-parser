@@ -178,7 +178,7 @@ class ReleaseElementSerializer(ElementProcessor):
 def process_dump_file(dump_filepath, element_processor):
 	"""
 	Given an XML dump file path (as a string), convert it to a stream and
-	pass it, along with anElementProcessor (or subclass) instance, to
+	pass it, along with an ElementProcessor (or subclass) instance, to
 	read_via_etree().
 	"""
 	dump_file_stream = GeneralEntityStreamWrapper(get_dump_file_stream(dump_filepath))
