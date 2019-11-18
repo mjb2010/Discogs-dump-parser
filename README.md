@@ -31,7 +31,7 @@ For example: [find_invalid_release_dates.py](https://pastebin.com/Acutu7xE) is a
 
     python find_invalid_release_dates.py discogs_20191101_releases.xml.gz > report.txt
 
-Every time it finds a non-empty release date which does not match the patterns `####` or `####-##-##` with a non-zero month value, it script will print a dot to the screen, and the output file report.txt will get a line like this:
+Every time it finds a non-empty release date which does not match the patterns `####` or `####-##-##` with a non-zero month value, it will print a dot to the screen, and the output file report.txt will get a line like this:
 
     https://www.discogs.com/release/41748 - release date is "?"
 
