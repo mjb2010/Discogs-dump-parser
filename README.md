@@ -35,6 +35,12 @@ Every time it finds a non-empty release date which does not match the patterns `
 
     https://www.discogs.com/release/41748 - release date is "?"
 
+### Error handling
+
+Some Discogs dump files contain errors in the XML. If you get an error message about the XML not being well-formed, you will have to fix the dump file. For example, you might need to remove backspace and carriage-return characters:
+
+    gzcat discogs_20080309_releases.xml.gz | tr -d '\010\015' | gzip -9 > discogs_20080309_releases.fixed.xml.gz
+
 ### Contact
 
 I am user [mjb](https://www.discogs.com/user/mjb) on Discogs. Feel free to contact me there via private message, or in the API forum.
