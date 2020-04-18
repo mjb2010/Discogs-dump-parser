@@ -37,9 +37,9 @@ Every time it finds a non-empty release date which does not match the patterns `
 
 ### Error handling
 
-Some Discogs dump files contain errors in the XML. If you get an error message about the XML not being well-formed, you will have to fix the dump file. For example, you might need to remove backspace and carriage-return characters:
+Some Discogs dump files contain errors in the XML. If you get an error message about the XML not being well-formed, you will have to fix the dump file. For example, you might need to remove the control characters which are forbidden in XML:
 
-    gzcat discogs_20080309_releases.xml.gz | tr -d '\010\015' | gzip -9 > discogs_20080309_releases.fixed.xml.gz
+    gzcat discogs_20080309_releases.xml.gz | tr -d '\1\2\3\4\5\6\7\10\13\14\16\17\20\21\22\23\24\25\26\27\30\31\32\33\34\35\36\37\177\200\201\202\203\204\206\207\210\211\212\213\214\215\216\217\220\221\222\223\224\225\226\227\230\231\232\233\234\235\236\237' | gzip -9 > discogs_20080309_releases.fixed.xml.gz
 
 ### Contact
 
